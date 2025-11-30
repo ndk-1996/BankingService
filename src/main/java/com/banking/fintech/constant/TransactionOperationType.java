@@ -31,9 +31,9 @@ public enum TransactionOperationType {
                 }
             }
 
-            throw new TransactionServiceException();
+            throw new TransactionServiceException(ErrorInfo.UNSUPPORTED_TRANSACTION_OPERATION_TYPE_INTERNAL_ERROR);
         }
 
-        throw new TransactionServiceException();
+        throw new TransactionServiceException(ErrorInfo.TRANSACTION_OPERATION_TYPE_CANNOT_BE_NULL);
     }
 }
