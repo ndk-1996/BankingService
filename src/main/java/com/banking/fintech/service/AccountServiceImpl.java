@@ -25,6 +25,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountRes createAccount(AccountReq accountReq) {
         log.info("In createAccount with req: {}", accountReq);
+
         AccountEntity accountEntity = AccountEntity.builder()
                 .documentNumber(accountReq.getDocumentNumber())
                 .build();

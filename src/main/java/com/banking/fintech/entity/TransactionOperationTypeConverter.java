@@ -9,11 +9,11 @@ public class TransactionOperationTypeConverter implements AttributeConverter<Tra
 
     @Override
     public String convertToDatabaseColumn(TransactionOperationType operationType) {
-        return operationType != null ? operationType.getValue() : null;
+        return operationType.getValue();
     }
 
     @Override
     public TransactionOperationType convertToEntityAttribute(String operationType) {
-        return operationType != null ? TransactionOperationType.getTransactionOperationType(operationType) : null;
+        return TransactionOperationType.getTransactionOperationType(operationType);
     }
 }

@@ -1,5 +1,6 @@
 package com.banking.fintech.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder(toBuilder = true)
 public class ErrorDetailRes {
 
+    @JsonProperty("error_message")
     private String errMsg;
+
+    @JsonProperty("error_code")
     private String errCode;
 }

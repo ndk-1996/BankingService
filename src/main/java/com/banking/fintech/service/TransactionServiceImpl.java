@@ -57,6 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         try {
             transactionEntity = transactionRepository.save(transactionEntity);
+            log.info("Saved transaction entity successfully to the db with entity: {}", transactionEntity);
         } catch (PersistenceException e) {
             log.error("Error while saving transaction entity to the db", e);
             throw new TransactionServiceException(ErrorInfo.INTERNAL_SERVER_ERROR_WHILE_SAVING_TO_DB, e);
