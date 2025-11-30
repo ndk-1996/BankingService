@@ -21,6 +21,8 @@ public class TransactionControllerImpl implements TransactionController {
 
     @Override
     public ResponseEntity<TransactionRes> createTransaction(TransactionReq transactionReq) {
-        return null;
+        log.info("In createTransaction with transactionReq: {}", transactionReq);
+
+        return ResponseEntity.ok(transactionService.createTransaction(transactionReq));
     }
 }

@@ -6,21 +6,15 @@ import lombok.Getter;
 @Getter
 public enum TransactionOperationType {
 
-    CREDIT("credit"),
-    DEBIT("debit");
+    CREDIT("credit", 1),
+    DEBIT("debit", -1);
 
     private final String value;
+    private final int multiplier;
 
-    TransactionOperationType(String value) {
+    TransactionOperationType(String value, int multiplier) {
         this.value = value;
-    }
-
-    public boolean isCredit() {
-        return CREDIT.equals(this);
-    }
-
-    public boolean isDebit() {
-        return DEBIT.equals(this);
+        this.multiplier = multiplier;
     }
 
     public static TransactionOperationType getTransactionOperationType(String operationType) {
