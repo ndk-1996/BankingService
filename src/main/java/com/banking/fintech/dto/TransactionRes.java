@@ -1,11 +1,12 @@
 package com.banking.fintech.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -13,9 +14,18 @@ import java.sql.Timestamp;
 @Builder(toBuilder = true)
 public class TransactionRes {
 
+    @JsonProperty("transaction_id")
     private Long transactionId;
+
+    @JsonProperty("account_id")
     private Long accountId;
+
+    @JsonProperty("operation_type_id")
     private Long operationTypeId;
+
+    @JsonProperty("amount")
     private Double amount;
-    private Timestamp eventDate;
+
+    @JsonProperty("event_date")
+    private Instant eventDate;
 }

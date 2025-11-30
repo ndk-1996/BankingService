@@ -1,35 +1,29 @@
 package com.banking.fintech.entity;
 
+import com.banking.fintech.constant.TransactionOperationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Entity
-@Table(name = "transactions")
-public class TransactionEntity {
+@Table(name = "operation_types")
+public class OperationTypeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "transaction_id")
-    private Long transactionId;
-
-    @Column(name = "account_id")
-    private Long accountId;
-
     @Column(name = "operation_type_id")
     private Long operationTypeId;
 
-    @Column(name = "amount")
-    private Double amount;
+    @Column(name = "description")
+    private String description;
 
-    @Column(name = "event_date")
-    private Instant eventDate;
+    @Convert(converter = TransactionOperationTypeConverter.class)
+    @Column(name = "operation_type")
+    private TransactionOperationType operationType;
 }
