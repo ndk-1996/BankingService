@@ -1,7 +1,9 @@
 package com.banking.fintech.repo;
 
+import com.banking.fintech.entity.TransactionEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class TransactionRepository {
+public interface TransactionRepository extends JpaRepository<TransactionEntity, Long> {
 }
