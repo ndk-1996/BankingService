@@ -21,15 +21,25 @@ public class TransactionEntity {
     @Column(name = "transaction_id")
     private Long transactionId;
 
-    @Column(name = "account_id")
-    private Long accountId;
+    @ManyToOne
+    @JoinColumn(
+            name = "account_id",
+            foreignKey = @ForeignKey(name = "fk_account"),
+            nullable = false
+    )
+    private AccountEntity accountEntity;
 
-    @Column(name = "operation_type_id")
-    private Long operationTypeId;
+    @ManyToOne
+    @JoinColumn(
+            name = "operation_type_id",
+            foreignKey = @ForeignKey(name = "fk_operation_type"),
+            nullable = false
+    )
+    private OperationTypeEntity operationTypeEntity;
 
-    @Column(name = "amount")
+    @Column(name = "amount", nullable = false)
     private Double amount;
 
-    @Column(name = "event_date")
+    @Column(name = "event_date", nullable = false)
     private Instant eventDate;
 }

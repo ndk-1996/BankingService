@@ -3,6 +3,7 @@ package com.banking.fintech.service;
 import com.banking.fintech.constant.ErrorInfo;
 import com.banking.fintech.dto.TransactionReq;
 import com.banking.fintech.dto.TransactionRes;
+import com.banking.fintech.entity.AccountEntity;
 import com.banking.fintech.entity.OperationTypeEntity;
 import com.banking.fintech.entity.TransactionEntity;
 import com.banking.fintech.exception.TransactionServiceException;
@@ -48,9 +49,12 @@ public class TransactionServiceImpl implements TransactionService {
             throw new TransactionServiceException(ErrorInfo.INTERNAL_SERVER_ERROR_WHILE_GETTING_FROM_DB, e);
         }
 
+        AccountEntity accountEntity = AccountEntity.builder().accountId(transactionReq.getAccountId()).build();
+        OperationTypeEntity operationTypeEntity = OperationTypeEntity.builder().operationTypeId(transactionReq.getOperationTypeId()).build();
+
         TransactionEntity transactionEntity = TransactionEntity.builder()
-                .accountId(transactionReq.getAccountId())
-                .operationTypeId(transactionReq.getOperationTypeId())
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
                 .amount(transactionReq.getAmount())
                 .eventDate(Instant.now())
                 .build();
@@ -65,8 +69,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         return TransactionRes.builder()
                 .transactionId(transactionEntity.getTransactionId())
-                .accountId(transactionEntity.getAccountId())
-                .operationTypeId(transactionEntity.getOperationTypeId())
+                .accountId(transactionEntity.getAccountEntity().getAccountId())
+                .operationTypeId(transactionEntity.getOperationTypeEntity().getOperationTypeId())
                 .amount(transactionEntity.getAmount())
                 .eventDate(transactionEntity.getEventDate())
                 .build();

@@ -20,10 +20,10 @@ public class OperationTypeEntity {
     @Column(name = "operation_type_id")
     private Long operationTypeId;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
     @Convert(converter = TransactionOperationTypeConverter.class)
-    @Column(name = "operation_type")
+    @Column(name = "operation_type", nullable = false)
     private TransactionOperationType operationType;
 }

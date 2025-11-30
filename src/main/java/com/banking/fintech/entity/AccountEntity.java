@@ -19,6 +19,6 @@ public class AccountEntity {
     @Column(name = "account_id")
     private Long accountId;
 
-    @Column(name = "document_number")
+    @Column(name = "document_number", nullable = false)
     private String documentNumber;
 }
