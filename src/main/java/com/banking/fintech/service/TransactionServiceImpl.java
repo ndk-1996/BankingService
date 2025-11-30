@@ -65,6 +65,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         return TransactionRes.builder()
                 .transactionId(transactionEntity.getTransactionId())
+                .accountId(transactionEntity.getAccountId())
                 .operationTypeId(transactionEntity.getOperationTypeId())
                 .amount(transactionEntity.getAmount())
                 .eventDate(transactionEntity.getEventDate())

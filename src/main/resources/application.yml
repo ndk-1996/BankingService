@@ -1,6 +1,32 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: banking-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/banking_db
+    username: ndk1996
+    password: localpassword@999
+  security:
+    user:
+      name: user@fintech.banking.com
+      password: password@fintech.banking.com
+  jackson:
+    parser:
+      strict-numbers: true
 
-server:
-  port: 8080
+jpa:
+  show-sql: true
+  properties:
+    hibernate:
+      format_sql: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    display-request-duration: true
