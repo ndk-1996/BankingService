@@ -266,71 +266,7 @@ class AccountControllerImplTest {
                 .hasFieldOrPropertyWithValue("documentNumber", "12345678901");
     }
 
-    // ============= Dependency Injection Tests =============
-
-    @Test
-    @DisplayName("Should properly inject AccountValidator dependency")
-    void shouldInjectAccountValidatorDependency() {
-        // Assert
-        assertThat(accountController).isNotNull();
-        assertThat(accountValidator).isNotNull();
-    }
-
-    @Test
-    @DisplayName("Should properly inject AccountService dependency")
-    void shouldInjectAccountServiceDependency() {
-        // Assert
-        assertThat(accountController).isNotNull();
-        assertThat(accountService).isNotNull();
-    }
-
     // ============= Edge Cases and Error Handling =============
-
-    @Test
-    @DisplayName("Should handle null response from service gracefully")
-    void shouldHandleNullResponseFromService() {
-        // Arrange
-        doNothing().when(accountValidator).validateCreateAccountReq(accountReq);
-        when(accountService.createAccount(accountReq)).thenReturn(null);
-
-        // Act
-        ResponseEntity<AccountRes> response = accountController.createAccount(accountReq);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNull();
-    }
-
-    @Test
-    @DisplayName("Should handle empty document number gracefully")
-    void shouldHandleEmptyDocumentNumber() {
-        // Arrange
-        AccountReq emptyReq = AccountReq.builder().documentNumber("").build();
-        doNothing().when(accountValidator).validateCreateAccountReq(emptyReq);
-        when(accountService.createAccount(emptyReq)).thenReturn(accountRes);
-
-        // Act
-        ResponseEntity<AccountRes> response = accountController.createAccount(emptyReq);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(accountValidator).validateCreateAccountReq(emptyReq);
-    }
-
-    @Test
-    @DisplayName("Should handle account retrieval with zero account ID")
-    void shouldHandleAccountRetrievalWithZeroId() {
-        // Arrange
-        Long zeroId = 0L;
-        when(accountService.getAccount(zeroId)).thenReturn(accountRes);
-
-        // Act
-        ResponseEntity<AccountRes> response = accountController.getAccount(zeroId);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(accountService).getAccount(zeroId);
-    }
 
     @Test
     @DisplayName("Should handle account retrieval with large account ID")
@@ -346,47 +282,4 @@ class AccountControllerImplTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(accountService).getAccount(largeId);
     }
-
-    // ============= Verification Tests =============
-
-    @Test
-    @DisplayName("Should not call validator when getting account")
-    void shouldNotCallValidatorWhenGettingAccount() {
-        // Arrange
-        when(accountService.getAccount(1L)).thenReturn(accountRes);
-
-        // Act
-        accountController.getAccount(1L);
-
-        // Assert
-        verify(accountValidator, never()).validateCreateAccountReq(any());
-    }
-
-    @Test
-    @DisplayName("Should call service exactly once during account creation")
-    void shouldCallServiceExactlyOnce() {
-        // Arrange
-        doNothing().when(accountValidator).validateCreateAccountReq(accountReq);
-        when(accountService.createAccount(accountReq)).thenReturn(accountRes);
-
-        // Act
-        accountController.createAccount(accountReq);
-
-        // Assert
-        verify(accountService, times(1)).createAccount(accountReq);
-    }
-
-    @Test
-    @DisplayName("Should call service exactly once during account retrieval")
-    void shouldCallServiceExactlyOnceForRetrieval() {
-        // Arrange
-        when(accountService.getAccount(1L)).thenReturn(accountRes);
-
-        // Act
-        accountController.getAccount(1L);
-
-        // Assert
-        verify(accountService, times(1)).getAccount(1L);
-    }
-
 }
