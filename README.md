@@ -21,7 +21,7 @@ A comprehensive Spring Boot-based banking service application for managing custo
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 Banking Service is a fintech application built with Spring Boot that manages:
 - **Customer Accounts**: Create and retrieve customer bank accounts
@@ -33,7 +33,7 @@ The application uses PostgreSQL as the database and provides comprehensive API d
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Component | Technology                                 | Version |
 |-----------|--------------------------------------------|--------|
@@ -51,7 +51,7 @@ The application uses PostgreSQL as the database and provides comprehensive API d
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -72,7 +72,7 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## 🚀 Project Setup
+## Project Setup
 
 ### 1. Clone the Repository
 
@@ -104,7 +104,7 @@ The dependencies will be automatically downloaded when you build the project. Ke
 
 ---
 
-## 🗄️ Database Setup
+## Database Setup
 
 ### Step 1: Install PostgreSQL
 
@@ -139,15 +139,15 @@ psql -U ndk1996 -d banking_db -h localhost
 ```
 
 ### Database Schema
-Refer to following file to see the database schema and entity relationships: [schema.sql](src/main/java/resources/schema.sql)
+Refer to following file to see the database schema and entity relationships: [schema.sql](src/main/resources/schema.sql)
 
 #### Initial Data
 The operation_types table needs to be pre-populated. 
-Refer to following file: [data.sql](src/main/java/resources/data.sql) and run the insert queries.
+Refer to following file: [data.sql](src/main/resources/data.sql) and run the insert queries.
 
 ---
 
-## ▶️ Running the Application
+## Running the Application
 
 ### Option 1: Run Using Maven
 
@@ -191,7 +191,7 @@ Service is up and running
 
 ---
 
-### 🔐 Security
+### Security
 
 The application includes Spring Security with basic authentication:
 
@@ -205,7 +205,7 @@ To access protected endpoints, provide these credentials in the login screen, wh
 
 ---
 
-## 🔨 Building the Project
+## Building the Project
 
 ### Clean Build
 
@@ -234,7 +234,7 @@ target/banking-service-1.0.0-SNAPSHOT.jar
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 ### Run All Tests
 
@@ -263,7 +263,7 @@ Tests are organized in `src/test/java/com/banking/fintech/` with the following c
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 ### Access Swagger UI
 
@@ -287,7 +287,7 @@ The Swagger UI provides interactive API documentation where you can:
 
 ---
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 ### Build Docker Image
 
@@ -346,7 +346,7 @@ docker-compose up
 
 ---
 
-## 📝 Application Configuration
+## Application Configuration
 
 Key configuration properties in `application.yml`:
 
@@ -370,7 +370,7 @@ Modify these settings as needed for your environment.
 
 ---
 
-## 👨‍💻 Development Notes
+## Development Notes
 
 - **Java Version**: The project targets Java 21. Ensure your environment uses Java 21.
 - **Maven**: Maven 3.9.2 or higher is required.
