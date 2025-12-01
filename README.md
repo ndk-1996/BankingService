@@ -35,19 +35,19 @@ The application uses PostgreSQL as the database and provides comprehensive API d
 
 ## 🛠 Tech Stack
 
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| **Framework** | Spring Boot | 4.0.0   |
-| **Language** | Java | 21      |
-| **Database** | PostgreSQL | 18      |
-| **Build Tool** | Maven | 3.9.2+  |
-| **ORM** | Spring Data JPA | 4.0.0   |
-| **Security** | Spring Security | 4.0.0   |
-| **API Documentation** | Springdoc OpenAPI (Swagger) | 3.0.0   |
-| **Validation** | Spring Validation (Jakarta) | 4.0.0   |
-| **Logging** | Logback | 1.5.21  |
-| **Utilities** | Lombok | 1.18.42 |
-| **Testing** | Spring Boot Test, JUnit 5 | 4.0.0   |
+| Component | Technology                                 | Version |
+|-----------|--------------------------------------------|--------|
+| **Framework** | Spring Boot                                | 4.0.0  |
+| **Language** | Java                                       | 21     |
+| **Database** | PostgreSQL                                 | 18     |
+| **Build Tool** | Maven                                      | 3.9.2  |
+| **ORM** | Spring Data JPA                            | 4.0.0  |
+| **Security** | Spring Security                            | 4.0.0  |
+| **API Documentation** | Springdoc OpenAPI (Swagger)                | 3.0.0  |
+| **Validation** | Spring Validation (Jakarta)                | 4.0.0  |
+| **Logging** | Logback                                    | 1.5.21 |
+| **Utilities** | Lombok                                     | 1.18.42 |
+| **Testing** | Spring Boot Test (JUnit, Mockito, AssertJ) | 4.0.0  |
 
 ---
 
@@ -139,32 +139,11 @@ psql -U ndk1996 -d banking_db -h localhost
 ```
 
 ### Database Schema
+Refer to following file to see the database schema and entity relationships: [schema.sql](src/main/java/resources/schema.sql)
 
-The application automatically creates the following tables on startup:
-
-**accounts**
-- `account_id` (BIGINT, Primary Key)
-- `document_number` (VARCHAR, Not Null)
-
-**operation_types**
-- `operation_type_id` (BIGINT, Primary Key)
-- `description` (VARCHAR, Not Null)
-- `operation_type` (VARCHAR, Not Null)
-
-**transactions**
-- `transaction_id` (BIGINT, Primary Key)
-- `account_id` (BIGINT, Foreign Key)
-- `operation_type_id` (BIGINT, Foreign Key)
-- `amount` (NUMERIC, Not Null)
-- `event_date` (TIMESTAMP, Not Null)
-
-### Initial Data
-
-The following operation types are pre-populated:
-- CASH PURCHASE (debit)
-- INSTALLMENT PURCHASE (debit)
-- WITHDRAWAL (debit)
-- PAYMENT (credit)
+#### Initial Data
+The operation_types table needs to be pre-populated. 
+Refer to following file: [data.sql](src/main/java/resources/data.sql) and run the insert queries.
 
 ---
 
@@ -209,6 +188,20 @@ Expected response:
 ```
 Service is up and running
 ```
+
+---
+
+### 🔐 Security
+
+The application includes Spring Security with basic authentication:
+
+**Default Credentials**:
+- Username: `user@fintech.banking.com`
+- Password: `password@fintech.banking.com`
+
+You can modify find these in the `application.yml` and modify it as per your need.
+
+To access protected endpoints, provide these credentials in the login screen, which comes when you hit the localhost url for first time after running the application.
 
 ---
 
@@ -350,20 +343,6 @@ Run with Docker Compose:
 ```bash
 docker-compose up
 ```
-
----
-
-## 🔐 Security
-
-The application includes Spring Security with basic authentication:
-
-**Default Credentials**:
-- Username: `user@fintech.banking.com`
-- Password: `password@fintech.banking.com`
-
-You can modify find these in the `application.yml` and modify it as per your need.
-
-To access protected endpoints, provide these credentials in the login screen, which comes when you hit the localhost url for first time after running the application.
 
 ---
 
