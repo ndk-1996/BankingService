@@ -40,6 +40,9 @@ public class TransactionEntity {
     @Column(name = "amount", nullable = false)
     private Double amount;
 
+    @Column(name = "balance", nullable = false)
+    private Double balance;
+
     @Column(name = "event_date", nullable = false)
     private Instant eventDate;
 }
