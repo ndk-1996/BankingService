@@ -305,41 +305,7 @@ docker run -d \
   banking-service:1.0.0
 ```
 
-### Docker Compose (Optional)
-
-Create a `docker-compose.yml` file for combined PostgreSQL and Application setup:
-
-```yaml
-version: '3.8'
-
-services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: ndk1996
-      POSTGRES_PASSWORD: localpassword@999
-      POSTGRES_DB: banking_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  banking-service:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banking_db
-      SPRING_DATASOURCE_USERNAME: ndk1996
-      SPRING_DATASOURCE_PASSWORD: localpassword@999
-
-volumes:
-  postgres_data:
-```
-
-Run with Docker Compose:
+### Run with Docker Compose:
 ```bash
 docker-compose up
 ```
