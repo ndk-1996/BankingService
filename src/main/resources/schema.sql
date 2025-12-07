@@ -14,6 +14,7 @@ CREATE TABLE transactions (
     account_id BIGINT NOT NULL,
     operation_type_id BIGINT NOT NULL,
     amount NUMERIC NOT NULL,
+    balance NUMERIC NOT NULL,
     event_date TIMESTAMP NOT NULL,
 
     CONSTRAINT fk_account

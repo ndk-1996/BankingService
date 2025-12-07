@@ -1,9 +1,6 @@
-# TODO: This is yet to be tested.
-version: '3.9'
-
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: banking-db
     environment:
       POSTGRES_USER: ndk1996
@@ -13,10 +10,10 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ndk1996"]
+      test: ["CMD-SHELL", "pg_isready -U ndk1996 -d banking_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,15 +34,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banking_db
       SPRING_DATASOURCE_USERNAME: ndk1996
       SPRING_DATASOURCE_PASSWORD: localpassword@999
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
     networks:
       - banking-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
 
 volumes:
   postgres_data:
@@ -53,4 +43,3 @@ volumes:
 networks:
   banking-network:
     driver: bridge
-

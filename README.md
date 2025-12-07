@@ -63,7 +63,7 @@ Before you begin, ensure you have the following installed:
   - Download from: https://maven.apache.org/download.cgi
   - Verify: `mvn -version`
 
-- **PostgreSQL 12** or higher
+- **PostgreSQL 18** or higher
   - Download from: https://www.postgresql.org/download/
   - Verify: `psql --version`
 
