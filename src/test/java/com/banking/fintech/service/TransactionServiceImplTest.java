@@ -15,11 +15,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,6 +80,7 @@ class TransactionServiceImplTest {
         // Arrange
         when(operationTypeRepository.existsById(1L)).thenReturn(true);
         when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of());
         when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(transactionEntity);
 
         // Act
@@ -97,6 +100,7 @@ class TransactionServiceImplTest {
 
         verify(operationTypeRepository).existsById(1L);
         verify(operationTypeRepository).getReferenceById(1L);
+        verify(transactionRepository).getNegativeBalTransactions(1L);
         verify(transactionRepository).save(any(TransactionEntity.class));
         verifyNoMoreInteractions(operationTypeRepository, transactionRepository);
     }
@@ -119,6 +123,7 @@ class TransactionServiceImplTest {
                 .accountEntity(accountEntity)
                 .operationTypeEntity(debitOperationType)
                 .amount(-50.0)
+                .balance(-50.0)
                 .eventDate(Instant.now())
                 .build();
 
@@ -138,6 +143,7 @@ class TransactionServiceImplTest {
 
         verify(operationTypeRepository).existsById(2L);
         verify(operationTypeRepository).getReferenceById(2L);
+        verify(transactionRepository, never()).getNegativeBalTransactions(anyLong());
         verify(transactionRepository).save(any(TransactionEntity.class));
     }
 
@@ -519,5 +525,563 @@ class TransactionServiceImplTest {
 
         // Assert
         assertThat(result.getAmount()).isEqualTo(smallAmount);
+    }
+
+    // ======================== NEW TEST CASES FOR BALANCE DISCHARGE LOGIC ========================
+
+    @Test
+    @DisplayName("Should discharge balance to negative transactions when balance exceeds negative balance")
+    void shouldDischargeBalanceToNegativeTransactions() {
+        // Arrange
+        Double creditAmount = 100.0;
+        transactionReq.setAmount(creditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-50.0)
+                .balance(-50.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(creditAmount)
+                .balance(50.0) // 100 - 50 = 50
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of(negativeTransaction));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result)
+                .isNotNull()
+                .extracting(TransactionRes::getAmount, TransactionRes::getAccountId)
+                .containsExactly(100.0, 1L);
+
+        verify(operationTypeRepository).existsById(1L);
+        verify(operationTypeRepository).getReferenceById(1L);
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should fully discharge negative balance when credit amount equals negative balance")
+    void shouldFullyDischargeNegativeBalanceWhenEqual() {
+        // Arrange
+        Double creditAmount = 50.0;
+        transactionReq.setAmount(creditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-50.0)
+                .balance(-50.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(creditAmount)
+                .balance(0.0) // 50 - 50 = 0
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of(negativeTransaction));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should partially discharge negative balance when credit amount is less than negative balance")
+    void shouldPartiallyDischargeNegativeBalance() {
+        // Arrange
+        Double creditAmount = 30.0;
+        transactionReq.setAmount(creditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-50.0)
+                .balance(-50.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(creditAmount)
+                .balance(0.0) // All credit consumed
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of(negativeTransaction));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should discharge balance to multiple negative transactions sequentially")
+    void shouldDischargeBalanceToMultipleNegativeTransactions() {
+        // Arrange
+        Double creditAmount = 100.0;
+        transactionReq.setAmount(creditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction1 = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-30.0)
+                .balance(-30.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity negativeTransaction2 = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-40.0)
+                .balance(-40.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(4L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(creditAmount)
+                .balance(30.0) // 100 - 30 - 40 = 30
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L))
+                .thenReturn(List.of(negativeTransaction1, negativeTransaction2));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should set balance to zero when all credit is discharged")
+    void shouldSetBalanceToZeroWhenAllCreditDischarged() {
+        // Arrange
+        Double creditAmount = 50.0;
+        transactionReq.setAmount(creditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-50.0)
+                .balance(-50.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(creditAmount)
+                .balance(0.0)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of(negativeTransaction));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should not call discharge balance for DEBIT transaction type")
+    void shouldNotCallDischargeBalanceForDebitTransaction() {
+        // Arrange
+        OperationTypeEntity debitOperationType = OperationTypeEntity.builder()
+                .operationTypeId(2L)
+                .description("WITHDRAWAL")
+                .operationType(TransactionOperationType.DEBIT)
+                .build();
+
+        transactionReq.setOperationTypeId(2L);
+        transactionReq.setAmount(50.0);
+
+        TransactionEntity debitTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(debitOperationType)
+                .amount(-50.0)
+                .balance(-50.0)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(2L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(2L)).thenReturn(debitOperationType);
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(debitTransaction);
+
+        // Act
+        transactionService.createTransaction(transactionReq);
+
+        // Assert
+        verify(transactionRepository, never()).getNegativeBalTransactions(anyLong());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when discharging balance fails")
+    void shouldThrowExceptionWhenDischargeBalanceFails() {
+        // Arrange
+        transactionReq.setAccountId(1L);
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L))
+                .thenThrow(new RuntimeException("Database error while fetching negative transactions"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> transactionService.createTransaction(transactionReq))
+                .isInstanceOf(TransactionServiceException.class)
+                .hasMessage(ErrorInfo.FAILURE_WHILE_DISCHARGING_BALANCE.getErrCode() + ": " +
+                           ErrorInfo.FAILURE_WHILE_DISCHARGING_BALANCE.getErrMsg());
+
+        verify(transactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should handle empty negative balance transactions list")
+    void shouldHandleEmptyNegativeBalTransactionsList() {
+        // Arrange
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(1L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(100.0)
+                .balance(100.0)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of());
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result)
+                .isNotNull()
+                .extracting(TransactionRes::getAmount)
+                .isEqualTo(100.0);
+
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should apply multiplier to CREDIT transaction amount")
+    void shouldApplyMultiplierToCreditTransaction() {
+        // Arrange
+        Double originalAmount = 100.0;
+        Double expectedAmount = 100.0; // CREDIT multiplier is 1
+        transactionReq.setAmount(originalAmount);
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(1L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(expectedAmount)
+                .balance(expectedAmount)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of());
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result.getAmount()).isEqualTo(expectedAmount);
+    }
+
+    @Test
+    @DisplayName("Should apply negative multiplier to DEBIT transaction amount")
+    void shouldApplyNegativeMultiplierToDebitTransaction() {
+        // Arrange
+        OperationTypeEntity debitOperationType = OperationTypeEntity.builder()
+                .operationTypeId(2L)
+                .description("WITHDRAWAL")
+                .operationType(TransactionOperationType.DEBIT)
+                .build();
+
+        Double originalAmount = 50.0;
+        Double expectedAmount = -50.0; // DEBIT multiplier is -1
+        transactionReq.setOperationTypeId(2L);
+        transactionReq.setAmount(originalAmount);
+
+        TransactionEntity debitTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(debitOperationType)
+                .amount(expectedAmount)
+                .balance(expectedAmount)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(2L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(2L)).thenReturn(debitOperationType);
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(debitTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result.getAmount()).isEqualTo(expectedAmount);
+    }
+
+    @Test
+    @DisplayName("Should set balance field correctly on saved transaction entity")
+    void shouldSetBalanceFieldCorrectlyOnSavedTransaction() {
+        // Arrange
+        Double expectedBalance = 100.0;
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(1L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(100.0)
+                .balance(expectedBalance)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of());
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should verify correct order of operations for CREDIT transaction")
+    void shouldVerifyCorrectOrderOfOperationsForCreditTransaction() {
+        // Arrange
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(1L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(100.0)
+                .balance(100.0)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of());
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        transactionService.createTransaction(transactionReq);
+
+        // Assert - verify order of method calls
+        InOrder inOrder = inOrder(operationTypeRepository, transactionRepository);
+        inOrder.verify(operationTypeRepository).existsById(1L);
+        inOrder.verify(operationTypeRepository).getReferenceById(1L);
+        inOrder.verify(transactionRepository).getNegativeBalTransactions(1L);
+        inOrder.verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should verify correct order of operations for DEBIT transaction")
+    void shouldVerifyCorrectOrderOfOperationsForDebitTransaction() {
+        // Arrange
+        OperationTypeEntity debitOperationType = OperationTypeEntity.builder()
+                .operationTypeId(2L)
+                .description("WITHDRAWAL")
+                .operationType(TransactionOperationType.DEBIT)
+                .build();
+
+        transactionReq.setOperationTypeId(2L);
+        transactionReq.setAmount(50.0);
+
+        TransactionEntity debitTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(debitOperationType)
+                .amount(-50.0)
+                .balance(-50.0)
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(2L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(2L)).thenReturn(debitOperationType);
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(debitTransaction);
+
+        // Act
+        transactionService.createTransaction(transactionReq);
+
+        // Assert - verify order and no call to getNegativeBalTransactions
+        InOrder inOrder = inOrder(operationTypeRepository, transactionRepository);
+        inOrder.verify(operationTypeRepository).existsById(2L);
+        inOrder.verify(operationTypeRepository).getReferenceById(2L);
+        inOrder.verify(transactionRepository).save(any(TransactionEntity.class));
+        verify(transactionRepository, never()).getNegativeBalTransactions(anyLong());
+    }
+
+    @Test
+    @DisplayName("Should handle large credit amount with multiple negative transactions")
+    void shouldHandleLargeCreditAmountWithMultipleNegativeTransactions() {
+        // Arrange
+        Double largeCreditAmount = 10000.0;
+        transactionReq.setAmount(largeCreditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction1 = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-2000.0)
+                .balance(-2000.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity negativeTransaction2 = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-3000.0)
+                .balance(-3000.0)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(4L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(largeCreditAmount)
+                .balance(5000.0) // 10000 - 2000 - 3000 = 5000
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L))
+                .thenReturn(List.of(negativeTransaction1, negativeTransaction2));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result)
+                .isNotNull()
+                .extracting(TransactionRes::getAmount)
+                .isEqualTo(largeCreditAmount);
+
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
+    }
+
+    @Test
+    @DisplayName("Should handle discharge balance logic with fractional amounts")
+    void shouldHandleDischargeBalanceWithFractionalAmounts() {
+        // Arrange
+        Double creditAmount = 100.50;
+        transactionReq.setAmount(creditAmount);
+        transactionReq.setAccountId(1L);
+
+        TransactionEntity negativeTransaction = TransactionEntity.builder()
+                .transactionId(2L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(-50.25)
+                .balance(-50.25)
+                .eventDate(Instant.now())
+                .build();
+
+        TransactionEntity creditTransaction = TransactionEntity.builder()
+                .transactionId(3L)
+                .accountEntity(accountEntity)
+                .operationTypeEntity(operationTypeEntity)
+                .amount(creditAmount)
+                .balance(50.25) // 100.50 - 50.25 = 50.25
+                .eventDate(Instant.now())
+                .build();
+
+        when(operationTypeRepository.existsById(1L)).thenReturn(true);
+        when(operationTypeRepository.getReferenceById(1L)).thenReturn(operationTypeEntity);
+        when(transactionRepository.getNegativeBalTransactions(1L)).thenReturn(List.of(negativeTransaction));
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(creditTransaction);
+
+        // Act
+        TransactionRes result = transactionService.createTransaction(transactionReq);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(transactionRepository).getNegativeBalTransactions(1L);
+        verify(transactionRepository).save(any(TransactionEntity.class));
     }
 }
