@@ -36,19 +36,24 @@ public enum ErrorInfo {
             "BANKING_TRANSACTION_006",
             HttpStatus.INTERNAL_SERVER_ERROR
     ),
+    FAILURE_WHILE_DISCHARGING_BALANCE(
+            "An error occurred while discharging the balance.",
+            "BANKING_TRANSACTION_007",
+            HttpStatus.INTERNAL_SERVER_ERROR
+    ),
     DOCUMENT_NUMBER_SHOULD_ONLY_CONSIST_OF_DIGITS(
             "The document number should only consist of digits.",
-            "BANKING_ACCOUNT_007",
+            "BANKING_ACCOUNT_008",
             HttpStatus.BAD_REQUEST
     ),
     CUSTOMER_ACCOUNT_NOT_FOUND(
             "Customer account not found for the provided accountId.",
-            "BANKING_ACCOUNT_008",
+            "BANKING_ACCOUNT_009",
             HttpStatus.NOT_FOUND
     ),
     TRANSACTION_OPERATION_TYPE_NOT_FOUND(
             "Transaction operation type not found for the provided operationTypeId.",
-            "BANKING_ACCOUNT_009",
+            "BANKING_ACCOUNT_010",
             HttpStatus.NOT_FOUND
     );
 
